@@ -2,10 +2,29 @@ name: 'docker-scan'
 description: 'Scan a docker image'
 author: 'Conventional Actions'
 inputs:
-  milliseconds: # change this
+  image:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: 'name of image to scan'
+  tag:
+    required: false
+    description: 'tag of image to scan'
+    default: 'latest'
+  severity:
+    required: false
+    description: 'only report vulnerabilities of provided level or higher (low, medium, high)'
+    default: 'medium'
+  token:
+    required: false
+    description: 'use the authentication token to log into the third-party scanning provider'
+    default: ${{ env.SNYK_AUTH_TOKEN }}
+  file:
+    required: false
+    description: 'specify the location of the Dockerfile associated with the image. This option displays a detailed scan result'
+    default: Dockerfile
+  exclude-base:
+    required: false
+    description: 'exclude the base image during scanning'
+    default: 'false'
 runs:
   using: 'node16'
   main: 'dist/index.js'
