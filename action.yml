@@ -16,7 +16,6 @@ inputs:
   token:
     required: false
     description: 'use the authentication token to log into the third-party scanning provider'
-    default: ${{ env.SNYK_AUTH_TOKEN }}
   file:
     required: false
     description: 'specify the location of the Dockerfile associated with the image. This option displays a detailed scan result'
