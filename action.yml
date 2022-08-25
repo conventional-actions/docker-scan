@@ -2,6 +2,10 @@ name: 'docker-scan'
 description: 'Scan a docker image'
 author: 'Conventional Actions'
 inputs:
+  scan-version:
+    required: false
+    description: 'version of docker scan to use'
+    default: v0.18.0
   image:
     required: true
     description: 'name of image to scan'
@@ -26,4 +30,5 @@ inputs:
     default: 'false'
 runs:
   using: 'node16'
-  main: 'dist/index.js'
+  pre: 'dist/setup/index.js'
+  main: 'dist/index/index.js'

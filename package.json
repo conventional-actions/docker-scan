@@ -5,13 +5,12 @@
   "description": "Docker Scan action",
   "main": "lib/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "ncc build --source-map --license licenses.txt -o dist/setup src/setup.ts && ncc build --source-map --license licenses.txt -o dist/main src/main.ts",
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
     "lint": "eslint src/**/*.ts",
-    "package": "ncc build --source-map --license licenses.txt",
     "test": "jest",
-    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+    "all": "npm run build && npm run format && npm run lint && npm test"
   },
   "repository": {
     "type": "git",
@@ -29,6 +28,8 @@
   },
   "devDependencies": {
     "@actions/exec": "^1.1.1",
+    "@actions/io": "^1.1.2",
+    "@actions/tool-cache": "^2.0.1",
     "@types/node": "^18.7.12",
     "@typescript-eslint/parser": "^5.34.0",
     "@vercel/ncc": "^0.34.0",
