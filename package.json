@@ -16,22 +16,28 @@
     "type": "git",
     "url": "git+https://github.com/conventional-actions/docker-scan.git"
   },
+  "homepage": "https://github.com/conventional-actions/docker-scan",
+  "bugs": {
+    "url": "https://github.com/conventional-actions/docker-scan/issues"
+  },
   "keywords": [
-    "actions",
-    "node",
-    "setup"
+    "GitHub",
+    "action",
+    "docker",
+    "scan",
+    "security"
   ],
-  "author": "",
+  "author": "Conventional Actions",
   "license": "MIT",
   "dependencies": {
-    "@actions/core": "^1.9.1"
-  },
-  "devDependencies": {
+    "@actions/core": "^1.9.1",
     "@actions/exec": "^1.1.1",
     "@actions/io": "^1.1.2",
-    "@actions/tool-cache": "^2.0.1",
-    "@types/node": "^18.7.12",
-    "@typescript-eslint/parser": "^5.34.0",
+    "@actions/tool-cache": "^2.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.7.13",
+    "@typescript-eslint/parser": "^5.35.1",
     "@vercel/ncc": "^0.34.0",
     "eslint": "^8.22.0",
     "eslint-plugin-github": "^4.3.7",
