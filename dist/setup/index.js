@@ -6558,12 +6558,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
+const io = __importStar(__nccwpck_require__(7436));
 const tc = __importStar(__nccwpck_require__(7784));
 const os_1 = __importDefault(__nccwpck_require__(2037));
 async function run() {
     try {
         let version = core.getInput('version') || 'latest';
-        const pluginPath = `${os_1.default.homedir()}/.docker/cli-plugins/docker-scan`;
+        const pluginDir = `${os_1.default.homedir()}/.docker/cli-plugins`;
+        core.debug('plugin dir is ${pluginDir}');
+        await io.mkdirP(pluginDir);
+        const pluginPath = `${pluginDir}/docker-scan`;
         core.debug(`plugin path is ${pluginPath}`);
         const manifest = await tc.getManifestFromRepo('conventional-actions', 'docker-scan', process.env['GITHUB_TOKEN'] || '', 'main');
         core.debug(`manifest = ${JSON.stringify(manifest)}`);
@@ -6573,9 +6577,12 @@ async function run() {
             version = rel.version;
             const downloadUrl = rel.files[0].download_url;
             core.debug(`downloading from ${downloadUrl}`);
-            const downloadPath = await tc.downloadTool(downloadUrl, pluginPath);
+            const downloadPath = await tc.downloadTool(downloadUrl);
             core.debug(`downloaded to ${downloadPath}`);
             await exec.exec('chmod', ['+x', downloadPath]);
+            core.debug(`copying ${downloadPath} to ${pluginPath}`);
+            await io.cp(downloadPath, pluginPath);
+            core.debug('caching tool');
             const toolPath = await tc.cacheFile(downloadPath, 'docker-scan', 'docker-scan', version, os_1.default.arch());
             core.debug(`tool path ${toolPath}`);
         }
