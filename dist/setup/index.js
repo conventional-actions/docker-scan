@@ -6572,14 +6572,26 @@ async function run() {
                 osArch = os_1.default.arch();
                 return;
         }
-        const scanVersion = core.getInput('scan-version');
-        const downloadPath = await tc.downloadTool(`https://github.com/docker/scan-cli-plugin/releases/download/${scanVersion}/docker-scan_linux_${osArch}`);
-        const toolPath = await tc.cacheDir(downloadPath, 'docker-scan', scanVersion, os_1.default.arch());
+        const token = core.getInput('token') || process.env['SNYK_TOKEN'] || process.env['SNYK_AUTH_TOKEN'] || '';
+        if (token) {
+            core.setSecret(token);
+        }
+        const scanVersion = core.getInput('scan-version') || 'latest';
+        core.debug(`downloading ${scanVersion} version`);
         const pluginPath = `${os_1.default.homedir()}/.docker/cli-plugins`;
+        core.debug(`plugin path ${pluginPath}`);
         await io.mkdirP(pluginPath);
-        await io.cp(toolPath, `${pluginPath}/docker-scan`);
+        const downloadPath = await tc.downloadTool(scanVersion === 'latest'
+            ? `https://github.com/docker/scan-cli-plugin/releases/latest/download/docker-scan_linux_${osArch}`
+            : `https://github.com/docker/scan-cli-plugin/releases/download/${scanVersion}/docker-scan_linux_${osArch}`, `${pluginPath}/docker-scan`);
+        core.debug(`downloaded to ${downloadPath}`);
+        const toolPath = await tc.cacheFile(downloadPath, 'docker-scan', 'docker-scan', scanVersion, os_1.default.arch());
+        core.debug(`tool path ${toolPath}`);
         await exec.exec('chmod', ['+x', `${pluginPath}/docker-scan`]);
-        // exec.exec("apt", ["install", "docker-scan-plugin"])
+        if (token) {
+            core.info('logging into snyk');
+            await exec.exec(`${pluginPath}/docker-scan`, ['--accept-license', '--login', '--token', token]);
+        }
     }
     catch (error) {
         if (error instanceof Error)

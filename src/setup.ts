@@ -17,24 +17,49 @@ async function run(): Promise<void> {
         return
     }
 
-    const scanVersion = core.getInput('scan-version')
+    const token =
+      core.getInput('token') ||
+      process.env['SNYK_TOKEN'] ||
+      process.env['SNYK_AUTH_TOKEN'] ||
+      ''
+    if (token) {
+      core.setSecret(token)
+    }
+
+    const scanVersion = core.getInput('scan-version') || 'latest'
+    core.debug(`downloading ${scanVersion} version`)
+
+    const pluginPath = `${os.homedir()}/.docker/cli-plugins`
+    core.debug(`plugin path ${pluginPath}`)
+    await io.mkdirP(pluginPath)
+
     const downloadPath = await tc.downloadTool(
-      `https://github.com/docker/scan-cli-plugin/releases/download/${scanVersion}/docker-scan_linux_${osArch}`
+      scanVersion === 'latest'
+        ? `https://github.com/docker/scan-cli-plugin/releases/latest/download/docker-scan_linux_${osArch}`
+        : `https://github.com/docker/scan-cli-plugin/releases/download/${scanVersion}/docker-scan_linux_${osArch}`,
+      `${pluginPath}/docker-scan`
     )
-    const toolPath = await tc.cacheDir(
+    core.debug(`downloaded to ${downloadPath}`)
+
+    const toolPath = await tc.cacheFile(
       downloadPath,
+      'docker-scan',
       'docker-scan',
       scanVersion,
       os.arch()
     )
-    const pluginPath = `${os.homedir()}/.docker/cli-plugins`
-
-    await io.mkdirP(pluginPath)
-    await io.cp(toolPath, `${pluginPath}/docker-scan`)
+    core.debug(`tool path ${toolPath}`)
 
     await exec.exec('chmod', ['+x', `${pluginPath}/docker-scan`])
-
-    // exec.exec("apt", ["install", "docker-scan-plugin"])
+    if (token) {
+      core.info('logging into snyk')
+      await exec.exec(`${pluginPath}/docker-scan`, [
+        '--accept-license',
+        '--login',
+        '--token',
+        token
+      ])
+    }
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }

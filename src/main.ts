@@ -1,28 +1,34 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import {ExecOptions} from '@actions/exec/lib/interfaces'
+import {parseInputFiles} from './utils'
 
 async function run(): Promise<void> {
   try {
-    const images: string[] = (core.getInput('image') || '').split(/\r?\n/)
-    const tags: string[] = (core.getInput('tag') || 'latest').split(/\r?\n/)
-    const severity: string = core.getInput('severity') || 'medium'
-    const file: string = core.getInput('file') || 'Dockerfile'
-    const token: string =
-      core.getInput('token') || process.env['SNYK_AUTH_TOKEN'] || ''
-    const excludeBase: boolean =
+    const images = parseInputFiles(core.getInput('image') || '')
+    const tags = parseInputFiles(core.getInput('tag') || 'latest')
+    const severity = core.getInput('severity') || 'medium'
+    const file = core.getInput('file') || 'Dockerfile'
+    const token =
+      core.getInput('token') ||
+      process.env['SNYK_TOKEN'] ||
+      process.env['SNYK_AUTH_TOKEN'] ||
+      ''
+    const excludeBase =
       (core.getInput('excludeBase') || process.env['DOCKER_EXCLUDE_BASE']) ===
       'true'
 
     core.info(core.getInput('exclude-base'))
 
     if (!images) {
-      core.error('image input is required')
+      core.setFailed('image input is required')
       return
     }
 
     if (!token) {
-      core.error('image token or env SNYK_AUTH_TOKEN is required')
+      core.setFailed(
+        'image token or env SNYK_TOKEN or env SNYK_AUTH_TOKEN is required'
+      )
       return
     }
 
