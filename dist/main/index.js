@@ -7302,8 +7302,12 @@ async function run() {
         const tags = (0, utils_1.parseInputFiles)(core.getInput('tag') || 'latest');
         const severity = core.getInput('severity') || 'medium';
         const file = core.getInput('file') || 'Dockerfile';
-        const token = core.getInput('token') || process.env['SNYK_TOKEN'] || process.env['SNYK_AUTH_TOKEN'] || '';
-        const excludeBase = (core.getInput('excludeBase') || process.env['DOCKER_EXCLUDE_BASE']) === 'true';
+        const token = core.getInput('token') ||
+            process.env['SNYK_TOKEN'] ||
+            process.env['SNYK_AUTH_TOKEN'] ||
+            '';
+        const excludeBase = (core.getInput('excludeBase') || process.env['DOCKER_EXCLUDE_BASE']) ===
+            'true';
         core.info(core.getInput('exclude-base'));
         if (!images) {
             core.setFailed('image input is required');

@@ -6572,7 +6572,10 @@ async function run() {
                 osArch = os_1.default.arch();
                 return;
         }
-        const token = core.getInput('token') || process.env['SNYK_TOKEN'] || process.env['SNYK_AUTH_TOKEN'] || '';
+        const token = core.getInput('token') ||
+            process.env['SNYK_TOKEN'] ||
+            process.env['SNYK_AUTH_TOKEN'] ||
+            '';
         if (token) {
             core.setSecret(token);
         }
@@ -6590,7 +6593,12 @@ async function run() {
         await exec.exec('chmod', ['+x', `${pluginPath}/docker-scan`]);
         if (token) {
             core.info('logging into snyk');
-            await exec.exec(`${pluginPath}/docker-scan`, ['--accept-license', '--login', '--token', token]);
+            await exec.exec(`${pluginPath}/docker-scan`, [
+                '--accept-license',
+                '--login',
+                '--token',
+                token
+            ]);
         }
     }
     catch (error) {
