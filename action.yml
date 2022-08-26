@@ -5,7 +5,7 @@ inputs:
   scan-version:
     required: false
     description: 'version of docker scan to use'
-    default: v0.18.0
+    default: latest
   image:
     required: true
     description: 'name of image to scan'

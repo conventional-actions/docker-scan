@@ -6,29 +6,24 @@ import {parseInputFiles} from './utils'
 async function run(): Promise<void> {
   try {
     const images = parseInputFiles(core.getInput('image') || '')
+    core.debug(`images = ${images}`)
+
     const tags = parseInputFiles(core.getInput('tag') || 'latest')
+    core.debug(`tags = ${tags}`)
+
     const severity = core.getInput('severity') || 'medium'
+    core.debug(`severity = ${severity}`)
+
     const file = core.getInput('file') || 'Dockerfile'
-    const token =
-      core.getInput('token') ||
-      process.env['SNYK_TOKEN'] ||
-      process.env['SNYK_AUTH_TOKEN'] ||
-      ''
+    core.debug(`file = ${file}`)
+
     const excludeBase =
       (core.getInput('excludeBase') || process.env['DOCKER_EXCLUDE_BASE']) ===
       'true'
+    core.debug(`excludeBase = ${excludeBase}`)
 
-    core.info(core.getInput('exclude-base'))
-
-    if (!images) {
+    if (!images || !images.length) {
       core.setFailed('image input is required')
-      return
-    }
-
-    if (!token) {
-      core.setFailed(
-        'image token or env SNYK_TOKEN or env SNYK_AUTH_TOKEN is required'
-      )
       return
     }
 
@@ -36,19 +31,14 @@ async function run(): Promise<void> {
       'scan',
       '--accept-license',
       '--dependency-tree',
-      '--file',
-      file,
       '--severity',
-      severity
+      severity,
+      '--file',
+      file
     ]
 
     if (excludeBase) {
       args = args.concat('--exclude-base')
-    }
-
-    if (token) {
-      core.setSecret(token)
-      args = args.concat('--token', token)
     }
 
     const options: ExecOptions = {

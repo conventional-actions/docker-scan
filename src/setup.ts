@@ -1,20 +1,45 @@
-import * as exec from '@actions/exec'
 import * as core from '@actions/core'
+import * as exec from '@actions/exec'
 import * as tc from '@actions/tool-cache'
-import * as io from '@actions/io'
 import os from 'os'
 
 async function run(): Promise<void> {
   try {
-    let osArch: string
-    switch (os.arch()) {
-      case 'x64':
-        osArch = 'amd64'
-        break
+    let version = core.getInput('version') || 'latest'
 
-      default:
-        osArch = os.arch()
-        return
+    const pluginPath = `${os.homedir()}/.docker/cli-plugins/docker-scan`
+    core.debug(`plugin path is ${pluginPath}`)
+
+    const manifest = await tc.getManifestFromRepo(
+        'conventional-actions',
+        'docker-scan',
+        process.env['GITHUB_TOKEN'] || '',
+        'main'
+    )
+    core.debug(`manifest = ${JSON.stringify(manifest)}`)
+
+    const rel = await tc.findFromManifest(
+        version === 'latest' ? '*' : version,
+        true,
+        manifest,
+        os.arch()
+    )
+    core.debug(`rel = ${JSON.stringify(rel)}`)
+
+    if (rel && rel.files.length > 0) {
+      version = rel.version
+      const downloadUrl = rel.files[0].download_url
+      core.debug(`downloading from ${downloadUrl}`)
+
+      const downloadPath = await tc.downloadTool(downloadUrl, pluginPath)
+      core.debug(`downloaded to ${downloadPath}`)
+
+      await exec.exec('chmod', ['+x', downloadPath])
+
+      const toolPath = await tc.cacheFile(downloadPath, 'docker-scan', 'docker-scan', version, os.arch())
+      core.debug(`tool path ${toolPath}`)
+    } else {
+      throw new Error(`could not find docker-scan ${version} for ${os.arch()}`)
     }
 
     const token =
@@ -24,42 +49,16 @@ async function run(): Promise<void> {
       ''
     if (token) {
       core.setSecret(token)
-    }
-
-    const scanVersion = core.getInput('scan-version') || 'latest'
-    core.debug(`downloading ${scanVersion} version`)
-
-    const pluginPath = `${os.homedir()}/.docker/cli-plugins`
-    core.debug(`plugin path ${pluginPath}`)
-    await io.mkdirP(pluginPath)
-
-    const downloadPath = await tc.downloadTool(
-      scanVersion === 'latest'
-        ? `https://github.com/docker/scan-cli-plugin/releases/latest/download/docker-scan_linux_${osArch}`
-        : `https://github.com/docker/scan-cli-plugin/releases/download/${scanVersion}/docker-scan_linux_${osArch}`,
-      `${pluginPath}/docker-scan`
-    )
-    core.debug(`downloaded to ${downloadPath}`)
-
-    const toolPath = await tc.cacheFile(
-      downloadPath,
-      'docker-scan',
-      'docker-scan',
-      scanVersion,
-      os.arch()
-    )
-    core.debug(`tool path ${toolPath}`)
-
-    await exec.exec('chmod', ['+x', `${pluginPath}/docker-scan`])
-    if (token) {
       core.info('logging into snyk')
-      await exec.exec(`${pluginPath}/docker-scan`, [
+      await exec.exec('docker', [
+        'scan',
         '--accept-license',
         '--login',
         '--token',
         token
       ])
     }
+
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
