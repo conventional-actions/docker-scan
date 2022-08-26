@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
+import * as io from '@actions/io'
 import * as tc from '@actions/tool-cache'
 import os from 'os'
 
@@ -7,22 +8,26 @@ async function run(): Promise<void> {
   try {
     let version = core.getInput('version') || 'latest'
 
-    const pluginPath = `${os.homedir()}/.docker/cli-plugins/docker-scan`
+    const pluginDir = `${os.homedir()}/.docker/cli-plugins`
+    core.debug('plugin dir is ${pluginDir}')
+    await io.mkdirP(pluginDir)
+
+    const pluginPath = `${pluginDir}/docker-scan`
     core.debug(`plugin path is ${pluginPath}`)
 
     const manifest = await tc.getManifestFromRepo(
-      'conventional-actions',
-      'docker-scan',
-      process.env['GITHUB_TOKEN'] || '',
-      'main'
+        'conventional-actions',
+        'docker-scan',
+        process.env['GITHUB_TOKEN'] || '',
+        'main'
     )
     core.debug(`manifest = ${JSON.stringify(manifest)}`)
 
     const rel = await tc.findFromManifest(
-      version === 'latest' ? '*' : version,
-      true,
-      manifest,
-      os.arch()
+        version === 'latest' ? '*' : version,
+        true,
+        manifest,
+        os.arch()
     )
     core.debug(`rel = ${JSON.stringify(rel)}`)
 
@@ -31,17 +36,21 @@ async function run(): Promise<void> {
       const downloadUrl = rel.files[0].download_url
       core.debug(`downloading from ${downloadUrl}`)
 
-      const downloadPath = await tc.downloadTool(downloadUrl, pluginPath)
+      const downloadPath = await tc.downloadTool(downloadUrl)
       core.debug(`downloaded to ${downloadPath}`)
 
       await exec.exec('chmod', ['+x', downloadPath])
 
+      core.debug(`copying ${downloadPath} to ${pluginPath}`)
+      await io.cp(downloadPath, pluginPath)
+
+      core.debug('caching tool')
       const toolPath = await tc.cacheFile(
-        downloadPath,
-        'docker-scan',
-        'docker-scan',
-        version,
-        os.arch()
+          downloadPath,
+          'docker-scan',
+          'docker-scan',
+          version,
+          os.arch()
       )
       core.debug(`tool path ${toolPath}`)
     } else {
