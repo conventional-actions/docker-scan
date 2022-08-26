@@ -7299,51 +7299,39 @@ const utils_1 = __nccwpck_require__(1314);
 async function run() {
     try {
         const images = (0, utils_1.parseInputFiles)(core.getInput('image') || '');
+        core.debug(`images = ${images}`);
         const tags = (0, utils_1.parseInputFiles)(core.getInput('tag') || 'latest');
+        core.debug(`tags = ${tags}`);
         const severity = core.getInput('severity') || 'medium';
+        core.debug(`severity = ${severity}`);
         const file = core.getInput('file') || 'Dockerfile';
-        const token = core.getInput('token') ||
-            process.env['SNYK_TOKEN'] ||
-            process.env['SNYK_AUTH_TOKEN'] ||
-            '';
+        core.debug(`file = ${file}`);
         const excludeBase = (core.getInput('excludeBase') || process.env['DOCKER_EXCLUDE_BASE']) ===
             'true';
-        core.info(core.getInput('exclude-base'));
-        if (!images) {
+        core.debug(`excludeBase = ${excludeBase}`);
+        if (!images || !images.length) {
             core.setFailed('image input is required');
-            return;
-        }
-        if (!token) {
-            core.setFailed('image token or env SNYK_TOKEN or env SNYK_AUTH_TOKEN is required');
             return;
         }
         let args = [
             'scan',
             '--accept-license',
             '--dependency-tree',
-            '--file',
-            file,
             '--severity',
-            severity
+            severity,
+            '--file',
+            file
         ];
         if (excludeBase) {
             args = args.concat('--exclude-base');
         }
-        if (token) {
-            core.setSecret(token);
-            args = args.concat('--token', token);
-        }
-        const options = {
-            listeners: {
-                stdout: (data) => {
-                    core.info(data.toString());
-                },
-                stderr: (data) => {
-                    core.error(data.toString());
-                }
-            }
-        };
-        images.map(async (image) => tags.map(async (tag) => exec.exec('docker', args.concat(`${image}:${tag}`), options)));
+        return core.group('Scanning', async () => {
+            images.map(async (image) => tags.map(async (tag) => {
+                core.info(`Scanning ${image}:${tag}`);
+                return exec.exec('docker', args.concat(`${image}:${tag}`));
+            }));
+            return;
+        });
     }
     catch (error) {
         if (error instanceof Error)

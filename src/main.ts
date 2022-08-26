@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
-import {ExecOptions} from '@actions/exec/lib/interfaces'
 import {parseInputFiles} from './utils'
 
 async function run(): Promise<void> {
@@ -41,22 +40,15 @@ async function run(): Promise<void> {
       args = args.concat('--exclude-base')
     }
 
-    const options: ExecOptions = {
-      listeners: {
-        stdout: (data: Buffer) => {
-          core.info(data.toString())
-        },
-        stderr: (data: Buffer) => {
-          core.error(data.toString())
-        }
-      }
-    }
-
-    images.map(async image =>
-      tags.map(async tag =>
-        exec.exec('docker', args.concat(`${image}:${tag}`), options)
+    return core.group('Scanning', async () => {
+      images.map(async image =>
+        tags.map(async tag => {
+          core.info(`Scanning ${image}:${tag}`)
+          return exec.exec('docker', args.concat(`${image}:${tag}`))
+        })
       )
-    )
+      return
+    })
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }

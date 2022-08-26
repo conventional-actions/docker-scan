@@ -11,18 +11,18 @@ async function run(): Promise<void> {
     core.debug(`plugin path is ${pluginPath}`)
 
     const manifest = await tc.getManifestFromRepo(
-        'conventional-actions',
-        'docker-scan',
-        process.env['GITHUB_TOKEN'] || '',
-        'main'
+      'conventional-actions',
+      'docker-scan',
+      process.env['GITHUB_TOKEN'] || '',
+      'main'
     )
     core.debug(`manifest = ${JSON.stringify(manifest)}`)
 
     const rel = await tc.findFromManifest(
-        version === 'latest' ? '*' : version,
-        true,
-        manifest,
-        os.arch()
+      version === 'latest' ? '*' : version,
+      true,
+      manifest,
+      os.arch()
     )
     core.debug(`rel = ${JSON.stringify(rel)}`)
 
@@ -36,7 +36,13 @@ async function run(): Promise<void> {
 
       await exec.exec('chmod', ['+x', downloadPath])
 
-      const toolPath = await tc.cacheFile(downloadPath, 'docker-scan', 'docker-scan', version, os.arch())
+      const toolPath = await tc.cacheFile(
+        downloadPath,
+        'docker-scan',
+        'docker-scan',
+        version,
+        os.arch()
+      )
       core.debug(`tool path ${toolPath}`)
     } else {
       throw new Error(`could not find docker-scan ${version} for ${os.arch()}`)
@@ -49,7 +55,8 @@ async function run(): Promise<void> {
       ''
     if (token) {
       core.setSecret(token)
-      core.info('logging into snyk')
+      core.info('Logging into snyk')
+
       await exec.exec('docker', [
         'scan',
         '--accept-license',
@@ -58,7 +65,6 @@ async function run(): Promise<void> {
         token
       ])
     }
-
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }

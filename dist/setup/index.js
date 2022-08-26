@@ -1,7 +1,7 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 5241:
+/***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -135,7 +135,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getIDToken = exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
-const command_1 = __nccwpck_require__(5241);
+const command_1 = __nccwpck_require__(7351);
 const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
 const os = __importStar(__nccwpck_require__(2037));
@@ -1128,7 +1128,7 @@ const os = __importStar(__nccwpck_require__(2037));
 const events = __importStar(__nccwpck_require__(2361));
 const child = __importStar(__nccwpck_require__(2081));
 const path = __importStar(__nccwpck_require__(1017));
-const io = __importStar(__nccwpck_require__(7351));
+const io = __importStar(__nccwpck_require__(7436));
 const ioUtil = __importStar(__nccwpck_require__(1962));
 const timers_1 = __nccwpck_require__(9512);
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -2666,7 +2666,7 @@ exports.getCmdPath = getCmdPath;
 
 /***/ }),
 
-/***/ 7351:
+/***/ 7436:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -3278,7 +3278,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.evaluateVersions = exports.isExplicitVersion = exports.findFromManifest = exports.getManifestFromRepo = exports.findAllVersions = exports.find = exports.cacheFile = exports.cacheDir = exports.extractZip = exports.extractXar = exports.extractTar = exports.extract7z = exports.downloadTool = exports.HTTPError = void 0;
 const core = __importStar(__nccwpck_require__(2186));
-const io = __importStar(__nccwpck_require__(7351));
+const io = __importStar(__nccwpck_require__(7436));
 const fs = __importStar(__nccwpck_require__(7147));
 const mm = __importStar(__nccwpck_require__(2473));
 const os = __importStar(__nccwpck_require__(2037));
@@ -6556,21 +6556,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const exec = __importStar(__nccwpck_require__(1514));
 const core = __importStar(__nccwpck_require__(2186));
+const exec = __importStar(__nccwpck_require__(1514));
 const tc = __importStar(__nccwpck_require__(7784));
-const io = __importStar(__nccwpck_require__(7351));
 const os_1 = __importDefault(__nccwpck_require__(2037));
 async function run() {
     try {
-        let osArch;
-        switch (os_1.default.arch()) {
-            case 'x64':
-                osArch = 'amd64';
-                break;
-            default:
-                osArch = os_1.default.arch();
-                return;
+        let version = core.getInput('version') || 'latest';
+        const pluginPath = `${os_1.default.homedir()}/.docker/cli-plugins/docker-scan`;
+        core.debug(`plugin path is ${pluginPath}`);
+        const manifest = await tc.getManifestFromRepo('conventional-actions', 'docker-scan', process.env['GITHUB_TOKEN'] || '', 'main');
+        core.debug(`manifest = ${JSON.stringify(manifest)}`);
+        const rel = await tc.findFromManifest(version === 'latest' ? '*' : version, true, manifest, os_1.default.arch());
+        core.debug(`rel = ${JSON.stringify(rel)}`);
+        if (rel && rel.files.length > 0) {
+            version = rel.version;
+            const downloadUrl = rel.files[0].download_url;
+            core.debug(`downloading from ${downloadUrl}`);
+            const downloadPath = await tc.downloadTool(downloadUrl, pluginPath);
+            core.debug(`downloaded to ${downloadPath}`);
+            await exec.exec('chmod', ['+x', downloadPath]);
+            const toolPath = await tc.cacheFile(downloadPath, 'docker-scan', 'docker-scan', version, os_1.default.arch());
+            core.debug(`tool path ${toolPath}`);
+        }
+        else {
+            throw new Error(`could not find docker-scan ${version} for ${os_1.default.arch()}`);
         }
         const token = core.getInput('token') ||
             process.env['SNYK_TOKEN'] ||
@@ -6578,22 +6588,9 @@ async function run() {
             '';
         if (token) {
             core.setSecret(token);
-        }
-        const scanVersion = core.getInput('scan-version') || 'latest';
-        core.debug(`downloading ${scanVersion} version`);
-        const pluginPath = `${os_1.default.homedir()}/.docker/cli-plugins`;
-        core.debug(`plugin path ${pluginPath}`);
-        await io.mkdirP(pluginPath);
-        const downloadPath = await tc.downloadTool(scanVersion === 'latest'
-            ? `https://github.com/docker/scan-cli-plugin/releases/latest/download/docker-scan_linux_${osArch}`
-            : `https://github.com/docker/scan-cli-plugin/releases/download/${scanVersion}/docker-scan_linux_${osArch}`, `${pluginPath}/docker-scan`);
-        core.debug(`downloaded to ${downloadPath}`);
-        const toolPath = await tc.cacheFile(downloadPath, 'docker-scan', 'docker-scan', scanVersion, os_1.default.arch());
-        core.debug(`tool path ${toolPath}`);
-        await exec.exec('chmod', ['+x', `${pluginPath}/docker-scan`]);
-        if (token) {
-            core.info('logging into snyk');
-            await exec.exec(`${pluginPath}/docker-scan`, [
+            core.info('Logging into snyk');
+            await exec.exec('docker', [
+                'scan',
                 '--accept-license',
                 '--login',
                 '--token',
