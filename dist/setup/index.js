@@ -6565,7 +6565,7 @@ async function run() {
     try {
         let version = core.getInput('version') || 'latest';
         const pluginDir = `${os_1.default.homedir()}/.docker/cli-plugins`;
-        core.debug('plugin dir is ${pluginDir}');
+        core.debug(`plugin dir is ${pluginDir}`);
         await io.mkdirP(pluginDir);
         const pluginPath = `${pluginDir}/docker-scan`;
         core.debug(`plugin path is ${pluginPath}`);

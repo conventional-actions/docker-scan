@@ -9,7 +9,7 @@ async function run(): Promise<void> {
     let version = core.getInput('version') || 'latest'
 
     const pluginDir = `${os.homedir()}/.docker/cli-plugins`
-    core.debug('plugin dir is ${pluginDir}')
+    core.debug(`plugin dir is ${pluginDir}`)
     await io.mkdirP(pluginDir)
 
     const pluginPath = `${pluginDir}/docker-scan`

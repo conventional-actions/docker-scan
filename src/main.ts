@@ -1,6 +1,7 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import {parseInputFiles} from './utils'
+import * as fs from 'fs'
 
 async function run(): Promise<void> {
   try {
@@ -31,13 +32,15 @@ async function run(): Promise<void> {
       '--accept-license',
       '--dependency-tree',
       '--severity',
-      severity,
-      '--file',
-      file
+      severity
     ]
 
     if (excludeBase) {
       args = args.concat('--exclude-base')
+    }
+
+    if (fs.existsSync(file)) {
+      args = args.concat('--file', file)
     }
 
     return core.group('Scanning', async () => {

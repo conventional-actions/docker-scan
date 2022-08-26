@@ -7296,6 +7296,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const utils_1 = __nccwpck_require__(1314);
+const fs = __importStar(__nccwpck_require__(7147));
 async function run() {
     try {
         const images = (0, utils_1.parseInputFiles)(core.getInput('image') || '');
@@ -7318,12 +7319,13 @@ async function run() {
             '--accept-license',
             '--dependency-tree',
             '--severity',
-            severity,
-            '--file',
-            file
+            severity
         ];
         if (excludeBase) {
             args = args.concat('--exclude-base');
+        }
+        if (fs.existsSync(file)) {
+            args = args.concat('--file', file);
         }
         return core.group('Scanning', async () => {
             images.map(async (image) => tags.map(async (tag) => {
