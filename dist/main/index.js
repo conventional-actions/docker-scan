@@ -7310,8 +7310,8 @@ async function run() {
         const excludeBase = (core.getInput('excludeBase') || process.env['DOCKER_EXCLUDE_BASE']) ===
             'true';
         core.debug(`excludeBase = ${excludeBase}`);
-        if (!images || !images.length) {
-            core.setFailed('image input is required');
+        if (!((images && images.length) || (images && images.length))) {
+            core.setFailed('image input or tag is required');
             return;
         }
         let args = [
@@ -7328,10 +7328,25 @@ async function run() {
             args = args.concat('--file', file);
         }
         return core.group('Scanning', async () => {
-            images.map(async (image) => tags.map(async (tag) => {
-                core.info(`Scanning ${image}:${tag}`);
-                return exec.exec('docker', args.concat(`${image}:${tag}`));
-            }));
+            if (images && images.length) {
+                images.map(async (image) => {
+                    if (tags && tags.length) {
+                        tags.map(async (tag) => {
+                            core.info(`Scanning ${image}:${tag}`);
+                            return exec.exec('docker', args.concat(`${image}:${tag}`));
+                        });
+                    }
+                    else {
+                        return exec.exec('docker', args.concat(image));
+                    }
+                });
+            }
+            else if (tags && tags.length) {
+                tags.map(async (tag) => {
+                    core.info(`Scanning ${tag}`);
+                    return exec.exec('docker', args.concat(tag));
+                });
+            }
             return;
         });
     }
