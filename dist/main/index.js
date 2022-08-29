@@ -7301,7 +7301,7 @@ async function run() {
     try {
         const images = (0, utils_1.parseInputFiles)(core.getInput('image') || '');
         core.debug(`images = ${images}`);
-        const tags = (0, utils_1.parseInputFiles)(core.getInput('tag') || 'latest');
+        const tags = (0, utils_1.parseInputFiles)(core.getInput('tag') || '');
         core.debug(`tags = ${tags}`);
         const severity = core.getInput('severity') || 'medium';
         core.debug(`severity = ${severity}`);

@@ -8,7 +8,7 @@ async function run(): Promise<void> {
     const images = parseInputFiles(core.getInput('image') || '')
     core.debug(`images = ${images}`)
 
-    const tags = parseInputFiles(core.getInput('tag') || 'latest')
+    const tags = parseInputFiles(core.getInput('tag') || '')
     core.debug(`tags = ${tags}`)
 
     const severity = core.getInput('severity') || 'medium'
