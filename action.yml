@@ -12,7 +12,6 @@ inputs:
   tag:
     required: false
     description: 'tag of image to scan'
-    default: 'latest'
   severity:
     required: false
     description: 'only report vulnerabilities of provided level or higher (low, medium, high)'

@@ -7376,6 +7376,7 @@ async function run() {
                         });
                     }
                     else {
+                        core.info(`Scanning ${image}`);
                         return exec.exec('docker', args.concat(image));
                     }
                 });

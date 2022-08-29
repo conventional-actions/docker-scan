@@ -32,6 +32,7 @@ async function run(): Promise<void> {
               return exec.exec('docker', args.concat(`${image}:${tag}`))
             })
           } else {
+            core.info(`Scanning ${image}`)
             return exec.exec('docker', args.concat(image))
           }
         })
