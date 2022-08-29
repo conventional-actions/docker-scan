@@ -7264,6 +7264,58 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 6373:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getConfig = void 0;
+const utils_1 = __nccwpck_require__(1314);
+const core = __importStar(__nccwpck_require__(2186));
+const getConfig = async () => {
+    const excludeBase = (core.getInput('excludeBase') || process.env['DOCKER_EXCLUDE_BASE']) ===
+        'true';
+    const config = {
+        images: (0, utils_1.parseInputFiles)(core.getInput('image') || ''),
+        tags: (0, utils_1.parseInputFiles)(core.getInput('tag') || ''),
+        severity: core.getInput('severity') || 'medium',
+        file: core.getInput('file') || 'Dockerfile',
+        excludeBase
+    };
+    if (!((config.images && config.images.length) || (config.images && config.images.length))) {
+        throw new Error('image input or tag is required');
+    }
+    return config;
+};
+exports.getConfig = getConfig;
+
+
+/***/ }),
+
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -7295,43 +7347,29 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
-const utils_1 = __nccwpck_require__(1314);
 const fs = __importStar(__nccwpck_require__(7147));
+const config_1 = __nccwpck_require__(6373);
 async function run() {
     try {
-        const images = (0, utils_1.parseInputFiles)(core.getInput('image') || '');
-        core.debug(`images = ${images}`);
-        const tags = (0, utils_1.parseInputFiles)(core.getInput('tag') || '');
-        core.debug(`tags = ${tags}`);
-        const severity = core.getInput('severity') || 'medium';
-        core.debug(`severity = ${severity}`);
-        const file = core.getInput('file') || 'Dockerfile';
-        core.debug(`file = ${file}`);
-        const excludeBase = (core.getInput('excludeBase') || process.env['DOCKER_EXCLUDE_BASE']) ===
-            'true';
-        core.debug(`excludeBase = ${excludeBase}`);
-        if (!((images && images.length) || (images && images.length))) {
-            core.setFailed('image input or tag is required');
-            return;
-        }
+        const config = await (0, config_1.getConfig)();
         let args = [
             'scan',
             '--accept-license',
             '--dependency-tree',
             '--severity',
-            severity
+            config.severity
         ];
-        if (excludeBase) {
+        if (config.excludeBase) {
             args = args.concat('--exclude-base');
         }
-        if (fs.existsSync(file)) {
-            args = args.concat('--file', file);
+        if (fs.existsSync(config.file)) {
+            args = args.concat('--file', config.file);
         }
         return core.group('Scanning', async () => {
-            if (images && images.length) {
-                images.map(async (image) => {
-                    if (tags && tags.length) {
-                        tags.map(async (tag) => {
+            if (config.images && config.images.length) {
+                config.images.map(async (image) => {
+                    if (config.tags && config.tags.length) {
+                        config.tags.map(async (tag) => {
                             core.info(`Scanning ${image}:${tag}`);
                             return exec.exec('docker', args.concat(`${image}:${tag}`));
                         });
@@ -7341,8 +7379,8 @@ async function run() {
                     }
                 });
             }
-            else if (tags && tags.length) {
-                tags.map(async (tag) => {
+            else if (config.tags && config.tags.length) {
+                config.tags.map(async (tag) => {
                     core.info(`Scanning ${tag}`);
                     return exec.exec('docker', args.concat(tag));
                 });
