@@ -7306,7 +7306,8 @@ const getConfig = async () => {
         file: core.getInput('file') || 'Dockerfile',
         excludeBase
     };
-    if (!((config.images && config.images.length) || (config.images && config.images.length))) {
+    if (!((config.images && config.images.length) ||
+        (config.images && config.images.length))) {
         throw new Error('image input or tag is required');
     }
     return config;
