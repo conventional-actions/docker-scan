@@ -9952,7 +9952,10 @@ const getConfig = async () => {
     core.debug(`plugin path is ${pluginPath}`);
     const config = {
         version: core.getInput('version') || 'latest',
-        snyk_token: core.getInput('token') || process.env['SNYK_TOKEN'] || process.env['SNYK_AUTH_TOKEN'] || '',
+        snyk_token: core.getInput('token') ||
+            process.env['SNYK_TOKEN'] ||
+            process.env['SNYK_AUTH_TOKEN'] ||
+            '',
         github_token: process.env['GITHUB_TOKEN'] || '',
         images: (0, toolkit_1.parseMultiInput)(core.getInput('image') || ''),
         tags: (0, toolkit_1.parseMultiInput)(core.getInput('tag') || ''),
