@@ -3014,6 +3014,63 @@ function copyFile(srcFile, destFile, force) {
 
 /***/ }),
 
+/***/ 2539:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.unmatchedPatterns = exports.paths = exports.parseMultiInput = void 0;
+const glob = __importStar(__nccwpck_require__(1957));
+const fs_1 = __nccwpck_require__(7147);
+function parseMultiInput(files) {
+    return files.split(/\r?\n/).reduce((acc, line) => acc
+        .concat(line.split(','))
+        .filter(pat => pat)
+        .map(pat => pat.trim()), []);
+}
+exports.parseMultiInput = parseMultiInput;
+function paths(patterns) {
+    return patterns.reduce((acc, pattern) => {
+        return acc.concat(glob.sync(pattern).filter(path => (0, fs_1.statSync)(path).isFile()));
+    }, []);
+}
+exports.paths = paths;
+function unmatchedPatterns(patterns) {
+    return patterns.reduce((acc, pattern) => {
+        return acc.concat(glob.sync(pattern).filter(path => (0, fs_1.statSync)(path).isFile()).length === 0
+            ? [pattern]
+            : []);
+    }, []);
+}
+exports.unmatchedPatterns = unmatchedPatterns;
+
+
+/***/ }),
+
 /***/ 9417:
 /***/ ((module) => {
 
@@ -7292,19 +7349,34 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getConfig = void 0;
-const utils_1 = __nccwpck_require__(1314);
+const toolkit_1 = __nccwpck_require__(2539);
 const core = __importStar(__nccwpck_require__(2186));
+const os_1 = __importDefault(__nccwpck_require__(2037));
+const io = __importStar(__nccwpck_require__(7436));
 const getConfig = async () => {
     const excludeBase = (core.getInput('excludeBase') || process.env['DOCKER_EXCLUDE_BASE']) ===
         'true';
+    const pluginDir = `${os_1.default.homedir()}/.docker/cli-plugins`;
+    core.debug(`plugin dir is ${pluginDir}`);
+    await io.mkdirP(pluginDir);
+    const pluginPath = `${pluginDir}/docker-scan`;
+    core.debug(`plugin path is ${pluginPath}`);
     const config = {
-        images: (0, utils_1.parseInputFiles)(core.getInput('image') || ''),
-        tags: (0, utils_1.parseInputFiles)(core.getInput('tag') || ''),
+        version: core.getInput('version') || 'latest',
+        snyk_token: core.getInput('token') || process.env['SNYK_TOKEN'] || process.env['SNYK_AUTH_TOKEN'] || '',
+        github_token: process.env['GITHUB_TOKEN'] || '',
+        images: (0, toolkit_1.parseMultiInput)(core.getInput('image') || ''),
+        tags: (0, toolkit_1.parseMultiInput)(core.getInput('tag') || ''),
         severity: core.getInput('severity') || 'medium',
         file: core.getInput('file') || 'Dockerfile',
-        excludeBase
+        excludeBase,
+        pluginDir,
+        pluginPath
     };
     if (!((config.images && config.images.length) ||
         (config.images && config.images.length))) {
@@ -7396,63 +7468,6 @@ async function run() {
     }
 }
 run();
-
-
-/***/ }),
-
-/***/ 1314:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.unmatchedPatterns = exports.paths = exports.parseInputFiles = void 0;
-const glob = __importStar(__nccwpck_require__(1957));
-const fs_1 = __nccwpck_require__(7147);
-const parseInputFiles = (files) => {
-    return files.split(/\r?\n/).reduce((acc, line) => acc
-        .concat(line.split(','))
-        .filter(pat => pat)
-        .map(pat => pat.trim()), []);
-};
-exports.parseInputFiles = parseInputFiles;
-const paths = (patterns) => {
-    return patterns.reduce((acc, pattern) => {
-        return acc.concat(glob.sync(pattern).filter(path => (0, fs_1.statSync)(path).isFile()));
-    }, []);
-};
-exports.paths = paths;
-const unmatchedPatterns = (patterns) => {
-    return patterns.reduce((acc, pattern) => {
-        return acc.concat(glob.sync(pattern).filter(path => (0, fs_1.statSync)(path).isFile()).length === 0
-            ? [pattern]
-            : []);
-    }, []);
-};
-exports.unmatchedPatterns = unmatchedPatterns;
 
 
 /***/ }),
