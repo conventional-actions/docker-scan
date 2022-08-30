@@ -7,6 +7,15 @@ async function run(): Promise<void> {
   try {
     const config = await getConfig()
 
+    if (
+      !(
+        (config.images && config.images.length) ||
+        (config.images && config.images.length)
+      )
+    ) {
+      throw new Error('image input or tag is required')
+    }
+
     let args = [
       'scan',
       '--accept-license',

@@ -28,7 +28,7 @@ export const getConfig = async (): Promise<Config> => {
   const pluginPath = `${pluginDir}/docker-scan`
   core.debug(`plugin path is ${pluginPath}`)
 
-  const config: Config = {
+  return {
     version: core.getInput('version') || 'latest',
     snyk_token:
       core.getInput('token') ||
@@ -44,15 +44,4 @@ export const getConfig = async (): Promise<Config> => {
     pluginDir,
     pluginPath
   }
-
-  if (
-    !(
-      (config.images && config.images.length) ||
-      (config.images && config.images.length)
-    )
-  ) {
-    throw new Error('image input or tag is required')
-  }
-
-  return config
 }

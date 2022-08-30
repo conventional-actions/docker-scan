@@ -7366,7 +7366,7 @@ const getConfig = async () => {
     await io.mkdirP(pluginDir);
     const pluginPath = `${pluginDir}/docker-scan`;
     core.debug(`plugin path is ${pluginPath}`);
-    const config = {
+    return {
         version: core.getInput('version') || 'latest',
         snyk_token: core.getInput('token') ||
             process.env['SNYK_TOKEN'] ||
@@ -7381,11 +7381,6 @@ const getConfig = async () => {
         pluginDir,
         pluginPath
     };
-    if (!((config.images && config.images.length) ||
-        (config.images && config.images.length))) {
-        throw new Error('image input or tag is required');
-    }
-    return config;
 };
 exports.getConfig = getConfig;
 
@@ -7428,6 +7423,10 @@ const config_1 = __nccwpck_require__(6373);
 async function run() {
     try {
         const config = await (0, config_1.getConfig)();
+        if (!((config.images && config.images.length) ||
+            (config.images && config.images.length))) {
+            throw new Error('image input or tag is required');
+        }
         let args = [
             'scan',
             '--accept-license',
