@@ -140,7 +140,6 @@ const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
 const os = __importStar(__nccwpck_require__(2037));
 const path = __importStar(__nccwpck_require__(1017));
-const uuid_1 = __nccwpck_require__(5840);
 const oidc_utils_1 = __nccwpck_require__(8041);
 /**
  * The code to exit an action
@@ -170,20 +169,9 @@ function exportVariable(name, val) {
     process.env[name] = convertedVal;
     const filePath = process.env['GITHUB_ENV'] || '';
     if (filePath) {
-        const delimiter = `ghadelimiter_${uuid_1.v4()}`;
-        // These should realistically never happen, but just in case someone finds a way to exploit uuid generation let's not allow keys or values that contain the delimiter.
-        if (name.includes(delimiter)) {
-            throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
-        }
-        if (convertedVal.includes(delimiter)) {
-            throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
-        }
-        const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
-        file_command_1.issueCommand('ENV', commandValue);
+        return file_command_1.issueFileCommand('ENV', file_command_1.prepareKeyValueMessage(name, val));
     }
-    else {
-        command_1.issueCommand('set-env', { name }, convertedVal);
-    }
+    command_1.issueCommand('set-env', { name }, convertedVal);
 }
 exports.exportVariable = exportVariable;
 /**
@@ -201,7 +189,7 @@ exports.setSecret = setSecret;
 function addPath(inputPath) {
     const filePath = process.env['GITHUB_PATH'] || '';
     if (filePath) {
-        file_command_1.issueCommand('PATH', inputPath);
+        file_command_1.issueFileCommand('PATH', inputPath);
     }
     else {
         command_1.issueCommand('add-path', {}, inputPath);
@@ -241,7 +229,10 @@ function getMultilineInput(name, options) {
     const inputs = getInput(name, options)
         .split('\n')
         .filter(x => x !== '');
-    return inputs;
+    if (options && options.trimWhitespace === false) {
+        return inputs;
+    }
+    return inputs.map(input => input.trim());
 }
 exports.getMultilineInput = getMultilineInput;
 /**
@@ -274,8 +265,12 @@ exports.getBooleanInput = getBooleanInput;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setOutput(name, value) {
+    const filePath = process.env['GITHUB_OUTPUT'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('OUTPUT', file_command_1.prepareKeyValueMessage(name, value));
+    }
     process.stdout.write(os.EOL);
-    command_1.issueCommand('set-output', { name }, value);
+    command_1.issueCommand('set-output', { name }, utils_1.toCommandValue(value));
 }
 exports.setOutput = setOutput;
 /**
@@ -404,7 +399,11 @@ exports.group = group;
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function saveState(name, value) {
-    command_1.issueCommand('save-state', { name }, value);
+    const filePath = process.env['GITHUB_STATE'] || '';
+    if (filePath) {
+        return file_command_1.issueFileCommand('STATE', file_command_1.prepareKeyValueMessage(name, value));
+    }
+    command_1.issueCommand('save-state', { name }, utils_1.toCommandValue(value));
 }
 exports.saveState = saveState;
 /**
@@ -470,13 +469,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.issueCommand = void 0;
+exports.prepareKeyValueMessage = exports.issueFileCommand = void 0;
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const fs = __importStar(__nccwpck_require__(7147));
 const os = __importStar(__nccwpck_require__(2037));
+const uuid_1 = __nccwpck_require__(5840);
 const utils_1 = __nccwpck_require__(5278);
-function issueCommand(command, message) {
+function issueFileCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
     if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
@@ -488,7 +488,22 @@ function issueCommand(command, message) {
         encoding: 'utf8'
     });
 }
-exports.issueCommand = issueCommand;
+exports.issueFileCommand = issueFileCommand;
+function prepareKeyValueMessage(key, value) {
+    const delimiter = `ghadelimiter_${uuid_1.v4()}`;
+    const convertedValue = utils_1.toCommandValue(value);
+    // These should realistically never happen, but just in case someone finds a
+    // way to exploit uuid generation let's not allow keys or values that contain
+    // the delimiter.
+    if (key.includes(delimiter)) {
+        throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+    }
+    if (convertedValue.includes(delimiter)) {
+        throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+    }
+    return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
+}
+exports.prepareKeyValueMessage = prepareKeyValueMessage;
 //# sourceMappingURL=file-command.js.map
 
 /***/ }),
@@ -4023,10 +4038,17 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.unmatchedPatterns = exports.paths = exports.parseMultiInput = void 0;
+exports.downloadToolFromManifest = exports.unmatchedPatterns = exports.paths = exports.parseMultiInput = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const tc = __importStar(__nccwpck_require__(7784));
 const glob = __importStar(__nccwpck_require__(1957));
 const fs_1 = __nccwpck_require__(7147);
+const os_1 = __importDefault(__nccwpck_require__(2037));
+const path_1 = __importDefault(__nccwpck_require__(1017));
 function parseMultiInput(files) {
     return files.split(/\r?\n/).reduce((acc, line) => acc
         .concat(line.split(','))
@@ -4036,18 +4058,53 @@ function parseMultiInput(files) {
 exports.parseMultiInput = parseMultiInput;
 function paths(patterns) {
     return patterns.reduce((acc, pattern) => {
-        return acc.concat(glob.sync(pattern).filter(path => (0, fs_1.statSync)(path).isFile()));
+        return acc.concat(glob.sync(pattern).filter(p => (0, fs_1.statSync)(p).isFile()));
     }, []);
 }
 exports.paths = paths;
 function unmatchedPatterns(patterns) {
     return patterns.reduce((acc, pattern) => {
-        return acc.concat(glob.sync(pattern).filter(path => (0, fs_1.statSync)(path).isFile()).length === 0
+        return acc.concat(glob.sync(pattern).filter(p => (0, fs_1.statSync)(p).isFile()).length === 0
             ? [pattern]
             : []);
     }, []);
 }
 exports.unmatchedPatterns = unmatchedPatterns;
+async function downloadToolFromManifest(repo, tool, version, github_token, archive_subdir) {
+    const manifest = await tc.getManifestFromRepo('conventional-actions', repo, github_token, 'main');
+    core.debug(`manifest = ${JSON.stringify(manifest)}`);
+    const rel = await tc.findFromManifest(version === 'latest' ? '*' : version, true, manifest, os_1.default.arch());
+    core.debug(`rel = ${JSON.stringify(rel)}`);
+    if (rel && rel.files.length > 0) {
+        const downloadUrl = rel.files[0].download_url;
+        core.debug(`downloading from ${downloadUrl}`);
+        const downloadPath = await tc.downloadTool(downloadUrl);
+        core.debug(`downloaded to ${downloadPath}`);
+        let extPath;
+        if (path_1.default.extname(downloadPath) === '.zip') {
+            extPath = await tc.extractZip(downloadPath);
+        }
+        else if (path_1.default.extname(downloadPath) === '.7z') {
+            extPath = await tc.extract7z(downloadPath);
+        }
+        else if (path_1.default.extname(downloadPath) === '.xar' ||
+            path_1.default.extname(downloadPath) === '.pkg') {
+            extPath = await tc.extractXar(downloadPath);
+        }
+        else {
+            extPath = await tc.extractTar(downloadPath);
+        }
+        core.debug(`extracted to ${extPath}`);
+        const toolPath = await tc.cacheDir(`${extPath}/${archive_subdir || ''}`, tool, rel.version, os_1.default.arch());
+        core.debug(`tool path ${toolPath}`);
+        core.addPath(toolPath);
+        return toolPath;
+    }
+    else {
+        throw new Error(`could not find ${tool} ${version} for ${os_1.default.arch()}`);
+    }
+}
+exports.downloadToolFromManifest = downloadToolFromManifest;
 
 
 /***/ }),
