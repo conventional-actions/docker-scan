@@ -16,13 +16,13 @@ inputs:
     description: 'exclude the base image during scanning'
     default: 'false'
     deprecationMessage: 'no longer available'
-  image:
-    required: true
-    description: 'name of image to scan'
   tag:
     required: false
     description: 'tag of image to scan'
-    default: 'latest'
+    deprecationMessage: 'no longer available'
+  image:
+    required: true
+    description: 'image to scan'
   file:
     required: false
     description: 'specify the location of the Dockerfile associated with the image. This option displays a detailed scan result'
@@ -56,7 +56,7 @@ runs:
     - --file
     - ${{ inputs.file }}
     - ${{ inputs.args }}
-    - ${{ inputs.image }}:${{ inputs.tag }}
+    - ${{ inputs.image }}
 branding:
   icon: alert-triangle
   color: purple

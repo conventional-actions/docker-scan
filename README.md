@@ -14,8 +14,7 @@ To use the GitHub Action, add the following to your job:
 
 | Name       | Default      | Description                                                                                                   |
 |------------|--------------|---------------------------------------------------------------------------------------------------------------|
-| `image`    | required     | name of image to scan                                                                                         |
-| `tag`      | `latest`     | tag of image to scan                                                                                          |
+| `image`    | required     | image to scan                                                                                                 |
 | `file`     | `Dockerfile` | specify the location of the Dockerfile associated with the image. This option displays a detailed scan result |
 | `severity` | `medium`     | only report vulnerabilities of provided level or higher (low, medium, high)                                   |
 | `args`     | N/A          | Additional arguments to pass to Snyk                                                                          |
