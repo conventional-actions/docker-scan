@@ -49,12 +49,9 @@ runs:
     - container
     - test
     - --sarif
-    - --severity-threshold
-    - ${{ inputs.severity }}
-    - --fail-on
-    - ${{ inputs.fail-on }}
-    - --file
-    - ${{ inputs.file }}
+    - --severity-threshold=${{ inputs.severity }}
+    - --fail-on=${{ inputs.fail-on }}
+    - --file=${{ inputs.file }}
     - ${{ inputs.args }}
     - ${{ inputs.image }}
 branding:
