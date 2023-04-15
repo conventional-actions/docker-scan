@@ -12,19 +12,22 @@ To use the GitHub Action, add the following to your job:
 
 ### Inputs
 
-| Name           | Default      | Description                                                                                                   |
-|----------------|--------------|---------------------------------------------------------------------------------------------------------------|
-| `scan-version` | `latest`     | the version of docker scan to install                                                                         |
-| `image`        | required     | name of image to scan                                                                                         |
-| `tag`          | `latest`     | tag of image to scan                                                                                          |
-| `severity`     | `medium`     | only report vulnerabilities of provided level or higher (low, medium, high)                                   |
-| `token`        | required     | use the authentication token to log into the third-party scanning provider                                    |
-| `file`         | `Dockerfile` | specify the location of the Dockerfile associated with the image. This option displays a detailed scan result |
-| `exclude-base` | `false`      | exclude the base image during scanning                                                                        |
+| Name       | Default      | Description                                                                                                   |
+|------------|--------------|---------------------------------------------------------------------------------------------------------------|
+| `image`    | required     | name of image to scan                                                                                         |
+| `tag`      | `latest`     | tag of image to scan                                                                                          |
+| `file`     | `Dockerfile` | specify the location of the Dockerfile associated with the image. This option displays a detailed scan result |
+| `severity` | `medium`     | only report vulnerabilities of provided level or higher (low, medium, high)                                   |
+| `args`     | N/A          | Additional arguments to pass to Snyk                                                                          |
+| `fail-on`  | `all`        | Fail only when there are vulnerabilities that can be fixed.                                                   |
 
 ### Outputs
 
 No outputs
+
+### Environment variables
+
+The `SNYK_TOKEN` environment variable should be set.
 
 ### Example
 
@@ -42,7 +45,8 @@ jobs:
       - uses: conventional-actions/docker-scan@v1
         with:
           image: octo/kit
-          token: ${{ secrets.SNYK_TOKEN }}
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 ```
 
 ## License

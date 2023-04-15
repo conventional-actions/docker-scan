@@ -6,31 +6,57 @@ inputs:
     required: false
     description: 'version of docker scan to use'
     default: latest
+    deprecationMessage: 'no longer available'
+  token:
+    required: false
+    description: 'use the authentication token to log into the third-party scanning provider'
+    deprecationMessage: 'no longer available'
+  exclude-base:
+    required: false
+    description: 'exclude the base image during scanning'
+    default: 'false'
+    deprecationMessage: 'no longer available'
   image:
     required: true
     description: 'name of image to scan'
   tag:
     required: false
     description: 'tag of image to scan'
-  severity:
-    required: false
-    description: 'only report vulnerabilities of provided level or higher (low, medium, high)'
-    default: 'medium'
-  token:
-    required: false
-    description: 'use the authentication token to log into the third-party scanning provider'
+    default: 'latest'
   file:
     required: false
     description: 'specify the location of the Dockerfile associated with the image. This option displays a detailed scan result'
     default: Dockerfile
-  exclude-base:
+  severity:
     required: false
-    description: 'exclude the base image during scanning'
-    default: 'false'
+    description: 'only report vulnerabilities of provided level or higher (low, medium, high, critical)'
+    default: 'medium'
+  args:
+    required: false
+    description: 'Additional arguments to pass to Snyk'
+  fail-on:
+    required: false
+    default: all
+    description: 'Fail only when there are vulnerabilities that can be fixed.'
 runs:
-  using: 'node16'
-  pre: 'dist/setup/index.js'
-  main: 'dist/main/index.js'
+  using: "docker"
+  image: "docker://snyk/snyk:docker"
+  env:
+    SNYK_INTEGRATION_NAME: GITHUB_ACTIONS
+    SNYK_INTEGRATION_VERSION: docker
+  args:
+    - snyk
+    - container
+    - test
+    - --sarif
+    - --severity-threshold
+    - ${{ inputs.severity }}
+    - --fail-on
+    - ${{ inputs.fail-on }}
+    - --file
+    - ${{ inputs.file }}
+    - ${{ inputs.args }}
+    - ${{ inputs.image }}:${{ inputs.tag }}
 branding:
-  icon: zoom-in
+  icon: alert-triangle
   color: purple
