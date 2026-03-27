@@ -2,24 +2,6 @@ name: 'docker-scan'
 description: 'Scan a docker image'
 author: 'Conventional Actions'
 inputs:
-  scan-version:
-    required: false
-    description: 'version of docker scan to use'
-    default: latest
-    deprecationMessage: 'no longer available'
-  token:
-    required: false
-    description: 'use the authentication token to log into the third-party scanning provider'
-    deprecationMessage: 'no longer available'
-  exclude-base:
-    required: false
-    description: 'exclude the base image during scanning'
-    default: 'false'
-    deprecationMessage: 'no longer available'
-  tag:
-    required: false
-    description: 'tag of image to scan'
-    deprecationMessage: 'no longer available'
   image:
     required: true
     description: 'image to scan'
